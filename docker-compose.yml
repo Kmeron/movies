@@ -1,0 +1,5 @@
+adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8888:8080
