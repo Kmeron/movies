@@ -28,6 +28,7 @@ async function deleteMovie ({ id, userId }) {
         id
       }
     }, { transaction })
+
     await transaction.commit()
     return {}
   } catch (error) {

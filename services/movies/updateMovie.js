@@ -2,15 +2,13 @@ const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
 const ServiceError = require('../../ServiceError')
-// const { Op } = require('sequelize')
 
-async function updateMovie ({ userId, ...movie }) {
+async function updateMovie ({ ...movie }) {
   const transaction = await sequelize.transaction()
 
   try {
     const isMovieExist = await Movie.findOne({
       where: {
-        userId,
         id: movie.id
       }
     }, { transaction })

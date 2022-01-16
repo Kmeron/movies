@@ -14,11 +14,16 @@ router
 router
   .route('/movies')
   .post(checkSession, controllers.movies.create)
+  .get(checkSession, controllers.movies.list)
 
 router
   .route('/movies/:id')
   .delete(checkSession, controllers.movies.delete)
   .patch(checkSession, controllers.movies.update)
   .get(checkSession, controllers.movies.show)
+
+router
+  .route('/movies/import')
+  .post(checkSession, controllers.movies.upload)
 
 module.exports = router

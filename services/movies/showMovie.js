@@ -2,6 +2,7 @@ const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
 const ServiceError = require('../../ServiceError')
+const dumpMovie = require('./dumpMovie.js')
 
 async function showMovie ({ id, userId }) {
   const transaction = await sequelize.transaction()
@@ -27,22 +28,7 @@ async function showMovie ({ id, userId }) {
       })
     }
 
-    const data = {
-      id: movie.id,
-      title: movie.title,
-      year: movie.year,
-      format: movie.format,
-      actors: movie.actors.map(actor => {
-        return {
-          id: actor.id,
-          name: actor.name,
-          createdAt: actor.createdAt,
-          updatedAt: actor.updatedAt
-        }
-      }),
-      createdAt: movie.createdAt,
-      updatedAt: movie.updatedAt
-    }
+    const data = dumpMovie(movie)
 
     console.log(movie)
     await transaction.commit()

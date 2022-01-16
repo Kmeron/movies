@@ -2,8 +2,9 @@ const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
 const ServiceError = require('../../ServiceError.js')
+const dumpMovie = require('./dumpMovie')
 
-async function createMovie (payload) {
+async function createMovie ({ actors, ...payload }) {
   const transaction = await sequelize.transaction()
   try {
     const isMovieExist = await Movie.findOne({
@@ -20,35 +21,60 @@ async function createMovie (payload) {
         code: 'MOVIE_EXISTS'
       })
     }
-
-    const actors = payload.actors.map(actor => {
+    const queryActors = actors.map(actor => {
       return { name: actor }
     })
-    const movie = { ...payload, actors }
 
-    const createdMovie = await Movie.create(movie, { include: [{ model: Actor, as: 'actors' }] }, { transaction })
+    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor }, { transaction })))
+    const isActorsExistArr = isActorsExist.map(actor => {
+      if (!actor) {
+        return null
+      }
+      return actor.dataValues.name
+    })
 
-    const data = {
-      id: createdMovie.id,
-      title: createdMovie.title,
-      year: createdMovie.year,
-      format: createdMovie.format,
-      actors: createdMovie.actors.map(actor => {
-        return {
-          id: actor.id,
-          name: actor.name,
-          createdAt: actor.createdAt,
-          updatedAt: actor.updatedAt
-        }
-      }),
-      createdAt: createdMovie.createdAt,
-      updatedAt: createdMovie.updatedAt
+    const newActors = []
+    for (let i = 0; i <= isActorsExistArr.length; i++) {
+      if (isActorsExistArr[i] !== actors[i]) {
+        newActors.push(actors[i])
+      }
     }
+
+    let actorsCreateResult
+    let actorsToSet
+    if (newActors.length) {
+      const newActorsArr = newActors.map(actor => {
+        return { name: actor }
+      })
+      actorsCreateResult = await Actor.bulkCreate(newActorsArr, { transaction })
+      actorsToSet = actorsCreateResult.map(actor => actor.dataValues.id)
+    }
+
+    const createdMovie = await Movie.create(payload, { transaction })
+
+    const existedActorsIds = isActorsExist.filter(actor => actor).map(actor => actor.dataValues.id)
+
+    const ids = actorsToSet ? [...existedActorsIds, ...actorsToSet] : [...existedActorsIds]
+
+    await createdMovie.setActors(ids, { transaction })
 
     await transaction.commit()
 
+    const result = await Movie.findOne({
+      where: {
+        id: createdMovie.id
+      },
+      include: [{
+        model: Actor,
+        as: 'actors'
+      }]
+    })
+
+    const data = dumpMovie(result)
+
     return { data }
   } catch (error) {
+    console.log(error)
     await transaction.rollback()
 
     throw error
