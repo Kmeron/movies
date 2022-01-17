@@ -22,7 +22,7 @@ module.exports = {
 
     const data = Buffer.concat(buffers).toString()
 
-    console.log(data) // movies
+    // console.log(data) // movies
     const payload = data.split('\n')
     console.log(payload)
 

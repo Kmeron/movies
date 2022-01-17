@@ -12,7 +12,11 @@ async function updateMovie ({ userId, ...movie }) {
       where: {
         userId,
         id: movie.id
-      }
+      },
+      include: [{
+        model: Actor,
+        as: 'actors'
+      }]
     }, { transaction })
 
     if (!isMovieExist) {
@@ -32,9 +36,12 @@ async function updateMovie ({ userId, ...movie }) {
       where: {
         userId,
         id: movie.id
-      },
-      returning: true
+      }
     }, { transaction }) // returns [0] or [1]
+
+    const previousActorsIds = isMovieExist.actors.map(actor => actor.id)
+    console.log(previousActorsIds)
+    await isMovieExist.removeActors(previousActorsIds, { transaction })
 
     const queryActors = movie.actors.map(actor => {
       return { name: actor }
@@ -71,6 +78,8 @@ async function updateMovie ({ userId, ...movie }) {
 
     await isMovieExist.setActors(ids, { transaction })
 
+    await transaction.commit()
+
     const updatedMovie = await Movie.findOne({
       where: {
         userId,
@@ -83,8 +92,6 @@ async function updateMovie ({ userId, ...movie }) {
     }, { transaction })
 
     const data = dumpMovie(updatedMovie)
-
-    await transaction.commit()
 
     return { data }
   } catch (error) {
