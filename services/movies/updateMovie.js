@@ -1,14 +1,16 @@
 const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
+const dumpMovie = require('./dumpMovie')
 const ServiceError = require('../../ServiceError')
 
-async function updateMovie ({ ...movie }) {
+async function updateMovie ({ userId, ...movie }) {
   const transaction = await sequelize.transaction()
 
   try {
     const isMovieExist = await Movie.findOne({
       where: {
+        userId,
         id: movie.id
       }
     }, { transaction })
@@ -22,10 +24,6 @@ async function updateMovie ({ ...movie }) {
       })
     }
 
-    const actors = movie.actors.map(actor => {
-      return { name: actor }
-    })
-
     await Movie.update({
       title: movie.title,
       year: movie.year,
@@ -35,28 +33,63 @@ async function updateMovie ({ ...movie }) {
         userId,
         id: movie.id
       },
-      include: [{
-        model: Actor,
-        as: 'actors'
-      }]
+      returning: true
     }, { transaction }) // returns [0] or [1]
+
+    const queryActors = movie.actors.map(actor => {
+      return { name: actor }
+    })
+
+    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor }, { transaction })))
+    const isActorsExistArr = isActorsExist.map(actor => {
+      if (!actor) {
+        return null
+      }
+      return actor.dataValues.name
+    })
+
+    const newActors = []
+    for (let i = 0; i <= isActorsExistArr.length; i++) {
+      if (isActorsExistArr[i] !== movie.actors[i]) {
+        newActors.push(movie.actors[i])
+      }
+    }
+
+    let actorsCreateResult
+    let actorsToSet
+    if (newActors.length) {
+      const newActorsArr = newActors.map(actor => {
+        return { name: actor }
+      })
+      actorsCreateResult = await Actor.bulkCreate(newActorsArr, { transaction })
+      actorsToSet = actorsCreateResult.map(actor => actor.dataValues.id)
+    }
+
+    const existedActorsIds = isActorsExist.filter(actor => actor).map(actor => actor.dataValues.id)
+
+    const ids = actorsToSet ? [...existedActorsIds, ...actorsToSet] : [...existedActorsIds]
+
+    await isMovieExist.setActors(ids, { transaction })
 
     const updatedMovie = await Movie.findOne({
       where: {
         userId,
         id: movie.id
-      }
+      },
+      include: [{
+        model: Actor,
+        as: 'actors'
+      }]
     }, { transaction })
-    console.log(updatedMovie)
 
-    const res = updatedMovie.getActors({ where: { movieId: movie.id } }, { transaction })// What is going on here??
-    console.log(res)
+    const data = dumpMovie(updatedMovie)
 
     await transaction.commit()
 
-    return {}
+    return { data }
   } catch (error) {
     await transaction.rollback()
+    console.log(error)
     throw error
   }
 }

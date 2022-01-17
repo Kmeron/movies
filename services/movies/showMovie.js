@@ -4,14 +4,14 @@ const { Actor } = require('../../models/actor')
 const ServiceError = require('../../ServiceError')
 const dumpMovie = require('./dumpMovie.js')
 
-async function showMovie ({ id, userId }) {
+async function showMovie ({ userId, id }) {
   const transaction = await sequelize.transaction()
 
   try {
     const movie = await Movie.findOne({
       where: {
-        userId,
-        id
+        id,
+        userId
       },
       include: [{
         model: Actor,
@@ -30,7 +30,6 @@ async function showMovie ({ id, userId }) {
 
     const data = dumpMovie(movie)
 
-    console.log(movie)
     await transaction.commit()
     return { data }
   } catch (error) {

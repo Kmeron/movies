@@ -1,47 +1,46 @@
 const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const ServiceError = require('../../ServiceError')
-// const { Op } = require('sequelize')
+const { Op } = require('sequelize')
+const { Actor } = require('../../models/actor.js')
 
-async function listMovies ({ sort = id, order = 'ASC', limit = 20, offset = 0, ...params }) {
-  console.log(params)
-  console.log(sort)
-  console.log(order)
-  console.log(limit)
-  // const transaction = await sequelize.transaction()
+async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0, ...params }) {
+  const transaction = await sequelize.transaction()
 
-  // try {
-  //   const { rows, count } = await Note.findAndCountAll(parseQuery(params), { transaction })
-  //   const data = rows.map(element => dumpNote(element.dataValues))
-  //   const meta = { limit: params.limit, offset: params.offset, totalCount: count }
-  //   await transaction.commit()
-  //   return { data, meta }
-  // } catch (error) {
-  //   await transaction.rollback()
-  //   if (['ER_PARSE_ERROR', 'ER_SP_UNDECLARED_VAR'].includes(error.code)) {
-  //     throw new ServiceError({
-  //       message: 'Provided invalid data for getting note',
-  //       code: 'INVALID_DATA'
-  //     })
-  //   }
-  //   throw error
-  // }
+  try {
+    const { rows, count } = await Movie.findAndCountAll(parseQuery(params, sort, order, limit, offset), { transaction })
+    console.log(rows)
+    console.log(count)
+    // const data = rows.map(element => dumpNote(element.dataValues))
+    // const meta = { limit: params.limit, offset: params.offset, totalCount: count }
+    await transaction.commit()
+    return { }
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
 }
 
 function parseQuery (params, sort, order, limit, offset) {
-  const query = {
+  let query = {
     where: [
       { userId: params.userId }
     ],
-    group: sort,
-    order: [['id', order]],
+    order: [[sort, order]],
     limit,
     offset
   }
 
-  // if (params.search) {
-  //   query.where.push(sequelize.literal(`MATCH (title,text) AGAINST ('(${params.search}*) ("${params.search}")' IN BOOLEAN MODE)`)) // Sql injection
-  // }
+  if (params.title) {
+    query.where.push({ title: { [Op.substring]: params.title } })
+  } else if (params.actor) {
+    query.include = [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.actor } } }]
+  } else if (params.search) {
+    query = {
+      where: { userId: params.userId, title: { [Op.substring]: params.search } },
+      include: [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.search } } }]
+    }
+  }
   return query
 }
 
