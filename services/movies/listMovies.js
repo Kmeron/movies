@@ -1,14 +1,23 @@
 const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
-// const ServiceError = require('../../ServiceError')
+const ServiceError = require('../../ServiceError')
 const { Op } = require('sequelize')
 const { Actor } = require('../../models/actor.js')
 
-async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0, ...params }) {
+async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0, userId, ...params }) {
   const transaction = await sequelize.transaction()
 
   try {
-    const { rows, count } = await Movie.findAndCountAll(parseQuery(params, sort, order, limit, offset), { transaction })
+    const { rows, count } = await Movie.findAndCountAll(parseQuery(params, sort, order, limit, offset, userId), { transaction })
+    console.log(params)
+    if (!count) {
+      throw new ServiceError({
+        fields: {
+          ...params
+        },
+        code: 'NOT FOUND'
+      })
+    }
 
     const data = rows.map(movie => {
       return {
@@ -31,10 +40,10 @@ async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0,
   }
 }
 
-function parseQuery (params, sort, order, limit, offset) {
+function parseQuery (params, sort, order, limit, offset, userId) {
   let query = {
     where: [
-      { userId: params.userId }
+      { userId }
     ],
     order: [[sort, order]],
     limit,
@@ -47,7 +56,7 @@ function parseQuery (params, sort, order, limit, offset) {
     query.include = [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.actor } } }]
   } else if (params.search) {
     query = {
-      where: { userId: params.userId, title: { [Op.substring]: params.search } },
+      where: { userId, title: { [Op.substring]: params.search } },
       include: [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.search } } }],
       order: [[sort, order]],
       limit,

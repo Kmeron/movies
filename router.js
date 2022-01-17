@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const controllers = require('./controllers')
 const { checkSession } = require('./middlewares')
+const multer = require('multer')
+const upload = multer()
 
 router
   .route('/users')
@@ -24,6 +26,6 @@ router
 
 router
   .route('/movies/import')
-  .post(checkSession, controllers.movies.upload)
+  .post(checkSession, upload.single('movies'), controllers.movies.upload)
 
 module.exports = router
