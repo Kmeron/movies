@@ -16,8 +16,9 @@ async function updateMovie ({ userId, ...movie }) {
       include: [{
         model: Actor,
         as: 'actors'
-      }]
-    }, { transaction })
+      }],
+      transaction
+    })
 
     if (!isMovieExist) {
       throw new ServiceError({
@@ -36,8 +37,9 @@ async function updateMovie ({ userId, ...movie }) {
       where: {
         userId,
         id: movie.id
-      }
-    }, { transaction }) // returns [0] or [1]
+      },
+      transaction
+    }) // returns [0] or [1]
 
     const previousActorsIds = isMovieExist.actors.map(actor => actor.id)
     console.log(previousActorsIds)
@@ -47,7 +49,7 @@ async function updateMovie ({ userId, ...movie }) {
       return { name: actor }
     })
 
-    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor }, { transaction })))
+    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor, transaction })))
     const isActorsExistArr = isActorsExist.map(actor => {
       if (!actor) {
         return null
@@ -89,7 +91,7 @@ async function updateMovie ({ userId, ...movie }) {
         model: Actor,
         as: 'actors'
       }]
-    }, { transaction })
+    })
 
     const data = dumpMovie(updatedMovie)
 

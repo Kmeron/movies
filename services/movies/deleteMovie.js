@@ -10,8 +10,9 @@ async function deleteMovie ({ id, userId }) {
       where: {
         userId,
         id
-      }
-    }, { transaction })
+      },
+      transaction
+    })
 
     if (!isMovieExist) {
       throw new ServiceError({
@@ -26,8 +27,9 @@ async function deleteMovie ({ id, userId }) {
       where: {
         userId,
         id
-      }
-    }, { transaction })
+      },
+      transaction
+    })
 
     await transaction.commit()
     return {}

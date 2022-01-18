@@ -16,8 +16,9 @@ async function showMovie ({ userId, id }) {
       include: [{
         model: Actor,
         as: 'actors'
-      }]
-    }, { transaction })
+      }],
+      transaction
+    })
 
     if (!movie) {
       throw new ServiceError({

@@ -9,5 +9,5 @@ app
   .use(express.json())
   .use('/api/v1', router)
 
-sequelize.sync()
+sequelize.sync({ force: true })
   .then(() => app.listen(port, console.log(`App listen on port: ${port}`)))

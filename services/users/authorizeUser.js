@@ -12,8 +12,9 @@ async function authorizeUser ({ email, password }) {
     const user = await User.findOne({
       where: {
         email
-      }
-    }, { transaction })
+      },
+      transaction
+    })
 
     if (!user) {
       throw new ServiceError({

@@ -12,8 +12,9 @@ async function createUser (newUser) {
     const isUserExist = await User.findOne({
       where: {
         email: newUser.email
-      }
-    }, { transaction })
+      },
+      transaction
+    })
 
     if (isUserExist) {
       throw new ServiceError({

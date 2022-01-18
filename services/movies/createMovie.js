@@ -9,9 +9,11 @@ async function createMovie ({ actors, ...payload }) {
   try {
     const isMovieExist = await Movie.findOne({
       where: {
+        userId: payload.userId,
         title: payload.title
-      }
-    }, { transaction })
+      },
+      transaction
+    })
 
     if (isMovieExist) {
       throw new ServiceError({
@@ -25,7 +27,7 @@ async function createMovie ({ actors, ...payload }) {
       return { name: actor }
     })
 
-    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor }, { transaction })))
+    const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor, transaction })))
     const isActorsExistArr = isActorsExist.map(actor => {
       if (!actor) {
         return null

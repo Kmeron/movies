@@ -8,7 +8,7 @@ async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0,
   const transaction = await sequelize.transaction()
 
   try {
-    const { rows, count } = await Movie.findAndCountAll(parseQuery(params, sort, order, limit, offset, userId), { transaction })
+    const { rows, count } = await Movie.findAndCountAll(parseQuery(params, sort, order, limit, offset, userId), { transaction })// Transaction?
     console.log(params)
     if (!count) {
       throw new ServiceError({
