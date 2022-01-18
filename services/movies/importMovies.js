@@ -38,22 +38,22 @@ async function importMovies (payload) {
     }
 
     const actors = newMovies.map(movie => {
-      const actorsArr = movie.actors.map(actor => {
+      const dumpedActors = movie.actors.map(actor => {
         return { name: actor }
       })
-      return actorsArr
+      return dumpedActors
     })
 
-    const arr = await Promise.all(
-      actors.map(async oneArr => {
-        const oneMovieArr = await Promise.all(
-          oneArr.map(acc => Actor.findOne({ where: { name: acc.name }, transaction }))
+    const actorsInDb = await Promise.all(
+      actors.map(async oneMovie => {
+        const oneMovieActors = await Promise.all(
+          oneMovie.map(acc => Actor.findOne({ where: { name: acc.name }, transaction }))
         )
-        return oneMovieArr
+        return oneMovieActors
       })
     )
 
-    const isNewActors = arr.flat()
+    const isNewActors = actorsInDb.flat()
     const allActors = actors.flat()
     const newActors = []
     for (let i = 0; i <= (isNewActors.length - 1); i++) {
@@ -61,9 +61,9 @@ async function importMovies (payload) {
         newActors.push(allActors[i])
       }
     }
-    const actorStrArr = newActors.map(ac => ac.name)
-    const nonDuplicated = [...new Set(actorStrArr)].map(acc => {
-      return { name: acc }
+    const actorsNames = newActors.map(actor => actor.name)
+    const nonDuplicated = [...new Set(actorsNames)].map(actor => {
+      return { name: actor }
     })
 
     await Actor.bulkCreate(nonDuplicated, { transaction })
@@ -74,8 +74,8 @@ async function importMovies (payload) {
 
     const actorsForNewMovies = newMovies.map(movie => movie.actors)
     const actorsToSet = await Promise.all(
-      actorsForNewMovies.map(async actArr => {
-        const act = await Promise.all(actArr.map(actor => Actor.findOne({ where: { name: actor }, transaction })))
+      actorsForNewMovies.map(async actors => {
+        const act = await Promise.all(actors.map(actor => Actor.findOne({ where: { name: actor }, transaction })))
         return act
       })
     )

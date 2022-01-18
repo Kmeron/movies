@@ -50,7 +50,7 @@ async function updateMovie ({ userId, ...movie }) {
     })
 
     const isActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor, transaction })))
-    const isActorsExistArr = isActorsExist.map(actor => {
+    const actorsToCompare = isActorsExist.map(actor => {
       if (!actor) {
         return null
       }
@@ -58,8 +58,8 @@ async function updateMovie ({ userId, ...movie }) {
     })
 
     const newActors = []
-    for (let i = 0; i <= isActorsExistArr.length; i++) {
-      if (isActorsExistArr[i] !== movie.actors[i]) {
+    for (let i = 0; i <= actorsToCompare.length; i++) {
+      if (actorsToCompare[i] !== movie.actors[i]) {
         newActors.push(movie.actors[i])
       }
     }
@@ -67,10 +67,10 @@ async function updateMovie ({ userId, ...movie }) {
     let actorsCreateResult
     let actorsToSet
     if (newActors.length) {
-      const newActorsArr = newActors.map(actor => {
+      const actorsBulk = newActors.map(actor => {
         return { name: actor }
       })
-      actorsCreateResult = await Actor.bulkCreate(newActorsArr, { transaction })
+      actorsCreateResult = await Actor.bulkCreate(actorsBulk, { transaction })
       actorsToSet = actorsCreateResult.map(actor => actor.dataValues.id)
     }
 
