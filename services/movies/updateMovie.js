@@ -40,10 +40,9 @@ async function updateMovie ({ userId, ...movie }) {
         id: movie.id
       },
       transaction
-    }) // returns [0] or [1]
+    })
 
     const previousActorsIds = isMovieExist.actors.map(actor => actor.id)
-    console.log(previousActorsIds)
     await isMovieExist.removeActors(previousActorsIds, { transaction })
 
     const queryActors = movie.actors.map(actor => {
@@ -99,7 +98,6 @@ async function updateMovie ({ userId, ...movie }) {
     return { data }
   } catch (error) {
     await transaction.rollback()
-    console.log(error)
     throw error
   }
 }

@@ -7,7 +7,6 @@ const jwt = require('jwt-simple')
 const Joi = require('joi')
 
 async function createUser (newUser) {
-  console.log(newUser)
   const transaction = await sequelize.transaction()
 
   try {

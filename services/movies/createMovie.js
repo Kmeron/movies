@@ -77,7 +77,6 @@ async function createMovie ({ actors, ...payload }) {
 
     return { data }
   } catch (error) {
-    console.log(error)
     await transaction.rollback()
 
     throw error

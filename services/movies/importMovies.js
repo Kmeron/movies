@@ -2,10 +2,8 @@ const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
 const Joi = require('joi')
-// const ServiceError = require('../../ServiceError.js')
 
 async function importMovies (payload) {
-  console.log(payload)
   const movies = payload.buffer.toString()
     .split('\n\n')
     .filter(elem => elem)
@@ -106,7 +104,6 @@ async function importMovies (payload) {
 
     return { data, meta }
   } catch (error) {
-    console.log(error)
     await transaction.rollback()
 
     throw error

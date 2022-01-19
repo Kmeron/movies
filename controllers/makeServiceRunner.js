@@ -5,12 +5,11 @@ const Joi = require('joi')
 function makeServiceRunner ({ service, validationRules }, dumpData) {
   return async (req, res) => {
     const payload = dumpData(req, res)
-    console.log(payload)
     const schema = Joi.object(validationRules)
 
     try {
       const data = await schema.validateAsync(payload, { abortEarly: false })
-      const promise = await service(payload)
+      const promise = await service(data)
       await successResponseToClient(res, promise)
     } catch (error) {
       if (error.name === 'ValidationError') {
@@ -29,9 +28,6 @@ function makeServiceRunner ({ service, validationRules }, dumpData) {
 
 async function successResponseToClient (res, promise) {
   const result = await promise
-  console.log(result)
-  // const data = result?.data ? result : { data: result }
-  // console.log(data)
   res.send({ ...result, status: 1 })
 }
 

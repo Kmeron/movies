@@ -10,7 +10,6 @@ async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0,
 
   try {
     const { rows, count } = await Movie.findAndCountAll({ ...parseQuery(params, sort, order, limit, offset, userId), transaction })
-    console.log(params)
     if (!count) {
       throw new ServiceError({
         fields: {
