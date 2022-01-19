@@ -4,8 +4,10 @@ const ServiceError = require('../../ServiceError')
 const bcrypt = require('bcrypt')
 const { saltRounds, jwtSecret } = require('../../config')
 const jwt = require('jwt-simple')
+const Joi = require('joi')
 
 async function createUser (newUser) {
+  console.log(newUser)
   const transaction = await sequelize.transaction()
 
   try {
@@ -53,4 +55,19 @@ async function createUser (newUser) {
   }
 }
 
-module.exports = { service: createUser }
+const validationRules = {
+  email: Joi.string()
+    .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+    .required(),
+
+  name: Joi.string()
+    .required(),
+
+  password: Joi.string()
+    .required(),
+
+  confirmPassword: Joi.ref('password')
+
+}
+
+module.exports = { service: createUser, validationRules }

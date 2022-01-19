@@ -1,10 +1,11 @@
 const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
+const Joi = require('joi')
 // const ServiceError = require('../../ServiceError.js')
-// const dumpMovie = require('./dumpMovie.js')
 
 async function importMovies (payload) {
+  console.log(payload)
   const movies = payload.buffer.toString()
     .split('\n\n')
     .filter(elem => elem)
@@ -112,4 +113,26 @@ async function importMovies (payload) {
   }
 }
 
-module.exports = { service: importMovies }
+const validationRules = {
+  userId: Joi.number()
+    .integer()
+    .positive()
+    .required(),
+  fieldname: Joi.string()
+    .required(),
+  originalname: Joi.string()
+    .required(),
+  encoding: Joi.string()
+    .valid('7bit')
+    .required(),
+  mimetype: Joi.string()
+    .valid('text/plain')
+    .required(),
+  buffer: Joi.binary()
+    .required(),
+  size: Joi.number()
+    .positive()
+    .required()
+}
+
+module.exports = { service: importMovies, validationRules }

@@ -3,6 +3,7 @@ const { Movie } = require('../../models/movie.js')
 const { Actor } = require('../../models/actor')
 const ServiceError = require('../../ServiceError')
 const dumpMovie = require('./dumpMovie.js')
+const Joi = require('joi')
 
 async function showMovie ({ userId, id }) {
   const transaction = await sequelize.transaction()
@@ -39,4 +40,15 @@ async function showMovie ({ userId, id }) {
   }
 }
 
-module.exports = { service: showMovie }
+const validationRules = {
+  userId: Joi.number()
+    .integer()
+    .positive()
+    .required(),
+  id: Joi.number()
+    .integer()
+    .positive()
+    .required()
+}
+
+module.exports = { service: showMovie, validationRules }

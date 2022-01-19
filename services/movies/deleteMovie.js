@@ -1,6 +1,7 @@
 const { sequelize } = require('../../db.js')
 const { Movie } = require('../../models/movie.js')
 const ServiceError = require('../../ServiceError')
+const Joi = require('joi')
 
 async function deleteMovie ({ id, userId }) {
   const transaction = await sequelize.transaction()
@@ -39,4 +40,15 @@ async function deleteMovie ({ id, userId }) {
   }
 }
 
-module.exports = { service: deleteMovie }
+const validationRules = {
+  userId: Joi.number()
+    .integer()
+    .positive()
+    .required(),
+  id: Joi.number()
+    .integer()
+    .positive()
+    .required()
+}
+
+module.exports = { service: deleteMovie, validationRules }

@@ -3,6 +3,7 @@ const { Movie } = require('../../models/movie.js')
 const ServiceError = require('../../ServiceError')
 const { Op } = require('sequelize')
 const { Actor } = require('../../models/actor.js')
+const Joi = require('joi')
 
 async function listMovies ({ sort = 'id', order = 'ASC', limit = 20, offset = 0, userId, ...params }) {
   const transaction = await sequelize.transaction()
@@ -66,4 +67,24 @@ function parseQuery (params, sort, order, limit, offset, userId) {
   return query
 }
 
-module.exports = { service: listMovies }
+const validationRules = {
+  userId: Joi.number()
+    .integer()
+    .positive()
+    .required(),
+  sort: Joi.string()
+    .valid('id', 'title', 'year'),
+  order: Joi.string()
+    .valid('ASC', 'DESC'),
+  limit: Joi.number()
+    .integer()
+    .positive(),
+  offset: Joi.number()
+    .integer()
+    .min(0),
+  actor: Joi.string(),
+  title: Joi.string(),
+  search: Joi.string()
+}
+
+module.exports = { service: listMovies, validationRules }

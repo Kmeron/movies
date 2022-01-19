@@ -1,14 +1,27 @@
 const ServiceError = require('../ServiceError')
+const ValidationError = require('../ValidationError')
+const Joi = require('joi')
 
-function makeServiceRunner ({ service }, dumpData) {
+function makeServiceRunner ({ service, validationRules }, dumpData) {
   return async (req, res) => {
     const payload = dumpData(req, res)
     console.log(payload)
+    const schema = Joi.object(validationRules)
 
     try {
+      const data = await schema.validateAsync(payload, { abortEarly: false })
       const promise = await service(payload)
       await successResponseToClient(res, promise)
     } catch (error) {
+      if (error.name === 'ValidationError') {
+        // eslint-disable-next-line no-ex-assign
+        error = new ValidationError({
+          fields: {
+            values: error.details.map(e => e.path[0])
+          },
+          code: 'INVALID_REQUEST_DATA'
+        })
+      }
       errorResponseToClient(res, error)
     }
   }

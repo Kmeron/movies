@@ -4,6 +4,7 @@ const { sequelize } = require('../../db.js')
 const { User } = require('../../models/user.js')
 const ServiceError = require('../../ServiceError.js')
 const { jwtSecret } = require('../../config.js')
+const Joi = require('joi')
 
 async function authorizeUser ({ email, password }) {
   const transaction = await sequelize.transaction()
@@ -58,4 +59,13 @@ async function authorizeUser ({ email, password }) {
   }
 }
 
-module.exports = { service: authorizeUser }
+const validationRules = {
+  email: Joi.string()
+    .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+    .required(),
+
+  password: Joi.string()
+    .required()
+}
+
+module.exports = { service: authorizeUser, validationRules }
