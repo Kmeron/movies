@@ -24,40 +24,18 @@ async function createMovie ({ actors, ...payload }) {
         code: 'MOVIE_EXISTS'
       })
     }
-    const queryActors = actors.map(actor => {
-      return { name: actor }
-    })
 
-    const areActorsExist = await Promise.all(queryActors.map(actor => Actor.findOne({ where: actor, transaction })))
-    const actorsToCompare = areActorsExist.map(actor => {
-      if (!actor) {
-        return null
-      }
-      return actor.dataValues.name
-    })
+    const areActorsExist = await Actor.findAll({ where: { name: actors }, transaction })
 
-    const newActors = []
-    for (let i = 0; i <= actorsToCompare.length; i++) {
-      if (actorsToCompare[i] !== actors[i]) {
-        newActors.push(actors[i])
-      }
-    }
+    const actorsToCreate = (actors.filter(actor => areActorsExist.every(a => a.name !== actor))).map(actor => ({ name: actor }))
 
-    let actorsCreateResult
-    let actorsToSet
-    if (newActors.length) {
-      const actorsBulk = newActors.map(actor => {
-        return { name: actor }
-      })
-      actorsCreateResult = await Actor.bulkCreate(actorsBulk, { transaction })
-      actorsToSet = actorsCreateResult.map(actor => actor.dataValues.id)
-    }
+    const createdActorsIds = (await Actor.bulkCreate(actorsToCreate, { transaction })).map(actor => actor.id)
+
+    const existedActorsIds = areActorsExist.map(actor => actor.id)
 
     const createdMovie = await Movie.create(payload, { transaction })
 
-    const existedActorsIds = areActorsExist.filter(actor => actor).map(actor => actor.dataValues.id)
-
-    const ids = actorsToSet ? [...existedActorsIds, ...actorsToSet] : [...existedActorsIds]
+    const ids = createdActorsIds ? [...existedActorsIds, ...createdActorsIds] : [...existedActorsIds]
 
     await createdMovie.setActors(ids, { transaction })
 
