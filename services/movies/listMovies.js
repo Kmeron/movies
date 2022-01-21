@@ -50,9 +50,12 @@ function parseQuery (params, sort, order, limit, offset, userId) {
     offset
   }
 
-  if (params.title) {
+  if (params.title && !params.actor) {
     query.where.push({ title: { [Op.substring]: params.title } })
-  } else if (params.actor) {
+  } else if (params.actor && !params.title) {
+    query.include = [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.actor } } }]
+  } else if (params.title && params.actor) {
+    query.where.push({ title: { [Op.substring]: params.title } })
     query.include = [{ model: Actor, as: 'actors', where: { name: { [Op.substring]: params.actor } } }]
   } else if (params.search) {
     query = {

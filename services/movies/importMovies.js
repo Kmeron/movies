@@ -43,8 +43,9 @@ async function importMovies (payload) {
 
     await Promise.all(createdMovies.map(movie => {
       const _actors = moviesToCreate.find(m => m.title === movie.title).actors
-      const actorsIds = dbActors.filter(actor => _actors.some(a => a.name === actor.name)).map(actor => actor.id)
-      return movie.setActors(actorsIds, { transaction })
+      const actorsIds = dbActors.filter(actor => _actors.some(a => a === actor.name)).map(actor => actor.id)
+      const uniqueActorsIds = [...new Set(actorsIds)]
+      return movie.setActors(uniqueActorsIds, { transaction })
     }))
 
     await transaction.commit()
